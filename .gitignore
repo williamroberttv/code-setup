@@ -1,0 +1,13 @@
+# OpenCode
+node_modules/
+.env
+.env.local
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
