@@ -76,7 +76,7 @@ Global OpenCode setup with a primary orchestration workflow, automatic routing t
 
 ```bash
 # Option 1: Clone this repo to your opencode config
-git clone https://github.com/yourusername/code-setup.git ~/.config/opencode
+git clone https://github.com/williamroberttv/code-setup.git ~/.config/opencode
 
 # Option 2: Copy manually
 mkdir -p ~/.config/opencode
