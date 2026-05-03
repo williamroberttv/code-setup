@@ -1,21 +1,39 @@
 # OpenCode Config
-Global OpenCode setup with a primary orchestration workflow, automatic routing to specialized subagents, GPT planning for large implementation work, and a default GLM final review with GPT escalation only when needed.
+
+Global OpenCode setup with provider-isolated orchestrators, automatic routing to specialized subagents, GPT planning for large implementation work, and a default GLM final review with GPT escalation only when needed.
 
 ## Files
 
 | File | Purpose | Description |
 |------|---------|-------------|
 | `opencode.json` | Main config | Models, MCP servers, custom commands |
-| `AGENTS.md` | Communication rules | Ultra-terse "caveman" mode for token saving |
-| `agents/` | Agent definitions | Subagent prompts and configurations |
-| `tools/workflow-route.ts` | Routing tool | Deterministic task router |
+| `AGENTS.md` | Communication rules | Provider isolation and orchestration guidelines |
+| `agents/` | Agent definitions | Orchestrator and subagent prompts |
+| `tools/workflow-route.ts` | Routing tool | Deterministic task router with provider profiles |
 | `WORKFLOW_DIAGRAM.md` | Workflow diagram | Mermaid workflow visualization |
 
-## Primary Model
+## Orchestrators
 
-- default model: `opencode-go/kimi-k2.6`
-- small_model: `opencode-go/deepseek-v4-flash`
-- default agent: `auto`
+This setup uses three provider-isolated orchestrators:
+
+| Orchestrator | Provider | Default Model | Purpose |
+|-------------|-----------|---------------|---------|
+| `copilot-orchestrator` | GitHub Copilot | `copilot/gpt-5.4` | Primary - uses Copilot subscription |
+| `go-orchestrator` | opencode-go | `opencode-go/kimi-k2.6` | Fallback - open models |
+| `gpt-orchestrator` | OpenAI | `openai/gpt-5.4` | Future - requires OpenAI subscription |
+
+### Provider Isolation Rule
+
+Each orchestrator may call only models from its own provider:
+- Copilot orchestrator → `copilot/*`
+- GO orchestrator → `opencode-go/*`
+- GPT orchestrator → `openai/*`
+
+## Primary Model (Default)
+
+- default model: `copilot/gpt-5.4`
+- default agent: `copilot-orchestrator`
+- small_model: `copilot/gpt-4o-mini`
 
 ## Configured MCP Servers
 
@@ -25,38 +43,51 @@ Global OpenCode setup with a primary orchestration workflow, automatic routing t
 - enabled: `true`
 - Tools: `jira_*` (only enabled for `jira` agent)
 
-## Model Roles
-
-| Model | Role | Agent |
-|-------|------|-------|
-| Kimi 2.6 | Orchestrates, reads context, sequences work | `auto` |
-| MiMo v2.5 Pro | Writes code, focused implementation | `qwen-coder` |
-| DeepSeek v4 Flash | Repo operations, tests, git, PRs | `qwen-operator` |
-| GLM-5 | RCA, tradeoffs, default review | `glm-analyzer`, `glm-reviewer` |
-| MiniMax M2.7 | Naming, rewrites, copy, brainstorming | `minimax-writer` |
-| GPT-5.4 | Large planning, escalation review | `gpt-planner`, `gpt-critic` |
-
-## Agents
-
-| Agent | Purpose |
-|-------|---------|
-| `auto` | Primary orchestrator, routes to specialists |
-| `qwen-coder` | Code implementation |
-| `qwen-operator` | Tests, git, PRs |
-| `glm-analyzer` | Root cause analysis |
-| `glm-reviewer` | Default final reviewer |
-| `gpt-planner` | Large implementation planning |
-| `gpt-critic` | Escalation reviewer |
-| `kimi-context` | Context compression |
-| `minimax-writer` | Creative writing |
-| `jira` | Jira MCP integration |
-
-## Custom Commands
+## Orchestrator Commands
 
 | Command | Agent | Description |
 |---------|-------|-------------|
-| `/ship` | auto | End-to-end implementation |
-| `/code` | qwen-coder | Fast coding pass |
+| `/copilot` | copilot-orchestrator | Primary - GitHub Copilot GPT |
+| `/go` | go-orchestrator | Fallback - opencode-go models |
+| `/gpt` | gpt-orchestrator | Future - OpenAI models |
+
+## Subagent Commands (Provider-Specific)
+
+### Copilot Subagents
+| Command | Agent | Description |
+|---------|-------|-------------|
+| `/copilot-rca` | copilot-analyzer | Root cause analysis |
+| `/copilot-review` | copilot-reviewer | Final review |
+| `/copilot-plan` | copilot-planner | Implementation planning |
+| `/copilot-code` | copilot-coder | Coding pass |
+| `/copilot-ops` | copilot-operator | Tests, git, PR |
+| `/copilot-draft` | copilot-writer | Naming, alternatives |
+
+### GO Subagents
+| Command | Agent | Description |
+|---------|-------|-------------|
+| `/go-rca` | go-analyzer | Root cause analysis |
+| `/go-review` | go-reviewer | Final review |
+| `/go-plan` | go-planner | Implementation planning |
+| `/go-code` | go-coder | Coding pass |
+| `/go-ops` | go-operator | Tests, git, PR |
+| `/go-draft` | go-writer | Naming, alternatives |
+
+### GPT Subagents (Future)
+| Command | Agent | Description |
+|---------|-------|-------------|
+| `/gpt-rca` | gpt-analyzer | Root cause analysis |
+| `/gpt-review` | gpt-reviewer | Final review |
+| `/gpt-code` | gpt-builder | Coding pass |
+| `/gpt-ops` | gpt-operator | Tests, git, PR |
+| `/gpt-draft` | gpt-writer | Naming, alternatives |
+
+## General Commands
+
+| Command | Agent | Description |
+|---------|-------|-------------|
+| `/ship` | copilot-orchestrator | End-to-end implementation |
+| `/code` | qwen-coder | Fast coding pass (opencode-go) |
 | `/ops` | qwen-operator | Tests, git, PR workflow |
 | `/rca` | glm-analyzer | Deep root cause analysis |
 | `/review` | glm-reviewer | Default final review |
@@ -70,22 +101,38 @@ Global OpenCode setup with a primary orchestration workflow, automatic routing t
 
 ### Prerequisites
 - OpenCode installed on the machine
-- Provider authentication configured (`opencode providers`)
+- GitHub Copilot configured (`/connect` command)
+- Provider authentication configured for additional providers as needed
 
 ### Install
 
 ```bash
-# Option 1: Clone this repo to your opencode config
+# Clone this repo to your opencode config
 git clone https://github.com/williamroberttv/code-setup.git ~/.config/opencode
+```
 
-# Option 2: Copy manually
+# Or copy manually
 mkdir -p ~/.config/opencode
 rsync -a opencode/ ~/.config/opencode/
 
-# Install dependencies (if needed)
+# Install dependencies
 cd ~/.config/opencode && npm install
-# or
-cd ~/.config/opencode && bun install
+```
+
+### Install RTK (Rust Token Killer)
+
+RTK reduces LLM token consumption by 60-90% on common dev commands.
+
+```bash
+# Install RTK (Linux)
+curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
+
+# Add to PATH if needed
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+
+# Initialize for OpenCode
+rtk init -g --opencode
 ```
 
 ### Verify Setup
@@ -93,12 +140,22 @@ cd ~/.config/opencode && bun install
 ```bash
 opencode debug config
 opencode agent list
+rtk --version
+rtk gain
 ```
 
 Expected:
-- `auto` as default agent
-- Main model: `kimi-k2.6`
-- Custom agents visible in list
+- `copilot-orchestrator` as default agent
+- Main model: `copilot/gpt-5.4`
+- Custom agents visible in list including: copilot-orchestrator, go-orchestrator, gpt-orchestrator
+
+## Fallback Chain
+
+```
+Copilot (primary) → GO (fallback) → GPT (future)
+```
+
+If Copilot is unavailable, switch to GO with `/go` command.
 
 ## Jira MCP Setup
 
@@ -120,46 +177,32 @@ If model names change in OpenCode, update in `opencode.json`:
 
 ```json
 {
-  "model": "opencode-go/NEW_MODEL_NAME",
-  "small_model": "opencode-go/NEW_SMALL_MODEL"
+  "model": "copilot/NEW_MODEL_NAME",
+  "small_model": "copilot/NEW_SMALL_MODEL"
 }
 ```
 
 Also update agent files in `agents/` directory if they have specific model overrides.
 
-## Caveman Mode
-
-`AGENTS.md` enforces ultra-terse "caveman" mode to save tokens.
-
-### Rules
-- Drop: articles, filler (just/really/basically), pleasantries, hedging
-- Abbreviate: DB/auth/config/req/res/fn/impl
-- Arrows: X → Y for causality
-- One word when one word enough
-- Fragments OK
-
-### Example
-**Normal:** "I would be happy to help you with that implementation, it seems like a good approach to take."
-
-**Caveman:** "Help you. Implement. Good approach."
-
 ## Workflow
 
 ```mermaid
 graph TD
-    A[User] --> B[auto]
+    A[User] --> B[copilot-orchestrator]
     B -->|Simple| C[Answer]
     B -->|Non-Trivial| D[workflow-route]
-    D --> E{Decision}
-    E --> F[Specialist]
-    F --> G[Result]
-    G --> H[glm-reviewer]
+    D -->|copilot profile| E[Copilot Subagents]
+    D -->|go profile| F[GO Subagents]
+    D -->|gpt profile| G[GPT Subagents]
+    E --> H[Result]
+    F --> H
+    G --> H
     H --> I[Done]
 ```
 
 ## Daily Usage
 
-For normal day-to-day work, use `auto`:
+For normal day-to-day work, use the default (Copilot):
 
 ```bash
 # Ask normal questions
@@ -172,7 +215,17 @@ opencode "Add login button to header"
 opencode "Run the test suite"
 ```
 
-`auto` will automatically route to the right specialist when needed.
+Use fallback when needed:
+
+```bash
+# Switch to GO orchestrator
+/opencode /go Fix this bug
+
+# Or use specific provider commands
+/opencode /go-rca Why is this failing?
+/opencode /go-code Implement feature X
+/opencode /go-ops Run tests
+```
 
 ## Updating Agents
 
