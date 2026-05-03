@@ -8,13 +8,6 @@ color: warning
 permission:
   edit: deny
   bash: deny
-tools:
-  read: allow
-  grep: allow
-  glob: allow
-  write: deny
-  edit: deny
-  bash: deny
 ---
 You are a planning-only subagent for large or high-impact implementation work.
 
