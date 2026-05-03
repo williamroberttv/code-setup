@@ -13,6 +13,15 @@ type Route =
   | "minimax-writer"
   | "general"
 
+type Provider = "copilot" | "opencode-go" | "openai" | "auto"
+
+const PROVIDER_ROUTES: Record<Provider, string[]> = {
+  copilot: ["copilot-coder", "copilot-operator", "copilot-analyzer", "copilot-reviewer", "copilot-planner", "copilot-writer"],
+  "opencode-go": ["qwen-coder", "qwen-operator", "glm-analyzer", "glm-reviewer", "kimi-context", "minimax-writer"],
+  openai: ["gpt-builder", "gpt-operator", "gpt-analyzer", "gpt-reviewer", "gpt-planner", "gpt-critic"],
+  auto: ["qwen-coder", "qwen-operator", "glm-analyzer", "glm-reviewer", "kimi-context", "minimax-writer"],
+}
+
 const SEARCH_PATTERNS = [
   /\bwhere\b/i,
   /\bfind\b/i,
@@ -125,6 +134,7 @@ export default tool({
     "Deterministically route a user task to the best OpenCode workflow or subagent. Use before non-trivial work.",
   args: {
     task: tool.schema.string().describe("Compact summary of the user request or current task"),
+    provider: tool.schema.enum(["copilot", "opencode-go", "openai", "auto"]).optional().describe("Provider for route filtering"),
     fileCount: tool.schema.number().int().nonnegative().optional().describe("Approximate number of relevant files"),
     scopeKnown: tool.schema.boolean().optional().describe("True when implementation scope was already measured from repo evidence rather than guessed from wording"),
     hasLongLogs: tool.schema.boolean().optional().describe("True when logs are long or noisy"),
@@ -158,22 +168,24 @@ export default tool({
     let score = 1
 
     if (args.hasIndependentSubtasks) {
-      route = "general"
+      route = args.provider === "copilot" ? "general" : args.provider === "openai" ? "general" : "general"
       score = 4
       reasons.push("Multiple independent subtasks can run in parallel")
     } else if (reviewOnly && gptEscalation) {
-      route = "glm-reviewer"
-      followUp = "gpt-critic"
+      route = args.provider === "copilot" ? "copilot-reviewer" : args.provider === "openai" ? "gpt-reviewer" : "glm-reviewer"
+      followUp = args.provider === "copilot" ? "copilot-coder" : args.provider === "openai" ? "gpt-critic" : "gpt-critic"
       score = 5
       reasons.push("Task is review-Only and high-stakes, so start with GLM review and escalate to GPT if needed")
     } else if (implementationHeavyContext) {
+      route = args.provider === "copilot" ? "copilot-coder" : args.provider === "openai" ? "gpt-builder" : "kimi-context"
+      followUp = args.provider === "copilot" ? "copilot-planner" : args.provider === "openai" ? "gpt-planner" : "gpt-planner"
       route = "kimi-context"
       followUp = "gpt-planner"
       score = 5
       reasons.push("Task is implementation work with known large scope and heavy context, so compress context before GPT plan")
-    } else if (knownLargeImplementation) {
-      route = "gpt-planner"
-      followUp = "qwen-coder"
+} else if (knownLargeImplementation) {
+      route = args.provider === "copilot" ? "copilot-planner" : args.provider === "openai" ? "gpt-planner" : "gpt-planner"
+      followUp = args.provider === "copilot" ? "copilot-coder" : args.provider === "openai" ? "gpt-builder" : "qwen-coder"
       score = 5
       reasons.push("Task is implementation work with known large scope, so get explicit GPT plan before execution")
     } else if (unknownImplementationScope) {
@@ -181,38 +193,38 @@ export default tool({
       score = 4
       reasons.push("Task needs code changes but real scope is not known yet, so measure from repo evidence first")
     } else if (containedImplementation && operate) {
-      route = "qwen-coder"
-      followUp = "qwen-operator"
+      route = args.provider === "copilot" ? "copilot-coder" : args.provider === "openai" ? "gpt-builder" : "qwen-coder"
+      followUp = args.provider === "copilot" ? "copilot-operator" : args.provider === "openai" ? "gpt-operator" : "qwen-operator"
       score = 5
       reasons.push("Task is contained implementation work with repo operations, so implement then hand off to operator")
     } else if (containedImplementation) {
-      route = "qwen-coder"
+      route = args.provider === "copilot" ? "copilot-coder" : args.provider === "openai" ? "gpt-builder" : "qwen-coder"
       score = 4
       reasons.push("Task is contained implementation work with scope already measured from repo evidence")
     } else if (largeContext && reviewOnly) {
-      route = "kimi-context"
-      followUp = "glm-reviewer"
+      route = args.provider === "copilot" ? "copilot-coder" : args.provider === "openai" ? "gpt-builder" : "kimi-context"
+      followUp = args.provider === "copilot" ? "copilot-reviewer" : args.provider === "openai" ? "gpt-reviewer" : "glm-reviewer"
       score = 5
-      reasons.push("Task combines large context with a requested review, so compress before GLM review")
+      reasons.push("Task combines large context with a requested review, so compress context before review")
     } else if (reviewOnly) {
-      route = "glm-reviewer"
+      route = args.provider === "copilot" ? "copilot-reviewer" : args.provider === "openai" ? "gpt-reviewer" : "glm-reviewer"
       score = 4
-      reasons.push("Task asks for review-only work and should use the default GLM reviewer")
+      reasons.push("Task asks for review-only work and should use the default reviewer")
     } else if (writingOnly) {
-      route = "minimax-writer"
+      route = args.provider === "copilot" ? "copilot-writer" : args.provider === "openai" ? "gpt-writer" : "minimax-writer"
       score = 4
       reasons.push("Task is wording, naming, rewrite, or brainstorming heavy")
     } else if (largeContext && rca) {
-      route = "kimi-context"
-      followUp = "glm-analyzer"
+      route = args.provider === "copilot" ? "copilot-coder" : args.provider === "openai" ? "gpt-builder" : "kimi-context"
+      followUp = args.provider === "copilot" ? "copilot-analyzer" : args.provider === "openai" ? "gpt-analyzer" : "glm-analyzer"
       score = 5
       reasons.push("Task combines large context with root cause or tradeoff analysis")
     } else if (operate) {
-      route = "qwen-operator"
+      route = args.provider === "copilot" ? "copilot-operator" : args.provider === "openai" ? "gpt-operator" : "qwen-operator"
       score = 4
       reasons.push("Task is primarily operational: tests, evals, git workflow, or PR work")
     } else if (largeContext) {
-      route = "kimi-context"
+      route = args.provider === "copilot" ? "copilot-coder" : args.provider === "openai" ? "gpt-builder" : "kimi-context"
       score = 4
       reasons.push("Task has large context and should be compressed first")
     } else if (search && !implementation && !rca) {
@@ -220,7 +232,7 @@ export default tool({
       score = 3
       reasons.push("Task is mainly repo discovery or code search")
     } else if (rca) {
-      route = "glm-analyzer"
+      route = args.provider === "copilot" ? "copilot-analyzer" : args.provider === "openai" ? "gpt-analyzer" : "glm-analyzer"
       score = 4
       reasons.push("Task is root cause, debugging, architecture, or tradeoff analysis")
     } else {
@@ -228,21 +240,41 @@ export default tool({
     }
 
     const hints: string[] = []
-    if (route === "explore") hints.push("Use Task/agent flow with explore to gather file locations and quick evidence before continuing")
-    if (route === "explore" && implementation)
+    const provider = args.provider ?? "auto"
+    const allowedRoutes = PROVIDER_ROUTES[provider]
+    const routeIsAllowed = allowedRoutes.includes(route) || route === "self" || route === "explore"
+    if (!routeIsAllowed) {
+      if (provider === "copilot") {
+        route = "general"
+        reasons.push(`Route ${route} not allowed for ${provider}, falling back to general`)
+      } else if (provider === "openai") {
+        route = "gpt-builder"
+        reasons.push(`Route ${route} not allowed for ${provider}, falling back to gpt-builder`)
+      }
+    }
+    const followUpAllowed = followUp ? (allowedRoutes.includes(followUp) || followUp === "explore") : true
+    if (followUp && !followUpAllowed) {
+      followUp = undefined
+      reasons.push(`Follow-up ${followUp} not allowed for ${provider}, dropped`)
+    }
+    if (route === "general") hints.push("Use Task/agent flow with explore to gather file locations and quick evidence before continuing")
+if (route === "explore" && implementation)
       hints.push("For implementation triage, ask explore for touched files, rough file count, boundary impact, state/cache impact. Then rerun workflow-route with scopeKnown=true and the measured signals")
     if (route === "kimi-context") hints.push("Use Task/agent flow with kimi-context and ask for compressed summary, key facts, gaps, and next steps")
-    if (route === "gpt-planner") hints.push("Use Task/agent flow with gpt-planner and ask for scope, invariants, touched files, ordered steps, risks, and validation checklist")
-    if (route === "glm-analyzer") hints.push("Use Task/agent flow with glm-analyzer and ask for root cause, evidence, fix options, and residual risks")
-    if (route === "glm-reviewer") hints.push("Use Task/agent flow with glm-reviewer and ask for findings, confidence level, and whether GPT escalation is needed")
+    if (route === "gpt-planner" || route === "copilot-planner") hints.push("Use Task/agent flow with planner to get scope, invariants, files, ordered steps, risks, validation")
+    if (route === "glm-analyzer" || route === "copilot-analyzer" || route === "gpt-analyzer") hints.push("Use Task/agent flow with analyzer to get root cause, evidence, fix options, residual risks")
+    if (route === "glm-reviewer" || route === "copilot-reviewer" || route === "gpt-reviewer") hints.push("Use Task/agent flow with reviewer to get findings, confidence, escalation decision")
     if (route === "gpt-critic") hints.push("Use Task/agent flow with gpt-critic only as escalation or explicit premium review")
-    if (route === "qwen-coder") hints.push("Use Task/agent flow with qwen-coder and ask for focused implementation with verification on the touched path")
-    if (route === "qwen-operator") hints.push("Use Task/agent flow with qwen-operator for tests, evals, git operations, commits, pushes, and PR creation")
-    if (route === "minimax-writer") hints.push("Use Task/agent flow with minimax-writer and ask for 3 to 5 strong alternatives ranked best first")
+    if (route === "qwen-coder" || route === "copilot-coder" || route === "gpt-builder") hints.push("Use Task/agent flow with coder to implement with focused diffs and verification")
+    if (route === "qwen-operator" || route === "copilot-operator" || route === "gpt-operator") hints.push("Use Task/agent flow with operator for tests, evals, git operations, commits, pushes, PR creation")
+    if (route === "minimax-writer" || route === "copilot-writer" || route === "gpt-writer") hints.push("Use Task/agent flow with writer to get 3-5 strong alternatives ranked best first")
     if (route === "general") hints.push("Use Task/agent flow with general, split only truly independent subtasks, and integrate the results yourself")
     if (followUp) hints.push(`After ${route}, continue with ${followUp}`)
-    if (implementation && operate) hints.push("After implementation path finishes code changes, continue with qwen-operator for tests and PR work when needed")
-    if (implementation) hints.push("If files change, run the mandatory glm-reviewer review at the end, not at the start")
+    if (implementation && operate) {
+      const opRoute = args.provider === "copilot" ? "copilot-operator" : args.provider === "openai" ? "gpt-operator" : "qwen-operator"
+      hints.push(`After implementation path finishes code changes, continue with ${opRoute} for tests and PR work when needed`)
+    }
+    if (implementation) hints.push("If files change, run the mandatory reviewer review at the end, not at the start")
 
     return JSON.stringify(
       {

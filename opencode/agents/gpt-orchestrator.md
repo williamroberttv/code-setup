@@ -13,7 +13,6 @@ permission:
     explore: allow
     general: allow
     gpt-planner: allow
-    gpt-planner-fast: allow
     gpt-builder: allow
     gpt-critic: allow
 ---
@@ -26,7 +25,6 @@ Hard boundary:
 
 When to delegate:
 - use `explore` for fast repo discovery
-- use `gpt-planner-fast` for small but tricky implementation work
 - use `gpt-planner` for larger or riskier implementation work
 - use `gpt-builder` for isolated implementation chunks
 - use `gpt-critic` for second-opinion review, high-stakes review, or explicit review requests

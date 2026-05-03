@@ -31,9 +31,9 @@ Each orchestrator may call only models from its own provider:
 
 ## Primary Model (Default)
 
-- default model: `copilot/gpt-5.4`
-- default agent: `copilot-orchestrator`
-- small_model: `copilot/gpt-4o-mini`
+- default model: `opencode-go/kimi-k2.6`
+- default agent: `auto` (uses automatic routing to specialized subagents)
+- small_model: `opencode-go/deepseek-v4-flash`
 
 ## Configured MCP Servers
 
@@ -86,7 +86,7 @@ Each orchestrator may call only models from its own provider:
 
 | Command | Agent | Description |
 |---------|-------|-------------|
-| `/ship` | copilot-orchestrator | End-to-end implementation |
+| `/ship` | auto | End-to-end implementation |
 | `/code` | qwen-coder | Fast coding pass (opencode-go) |
 | `/ops` | qwen-operator | Tests, git, PR workflow |
 | `/rca` | glm-analyzer | Deep root cause analysis |
@@ -145,9 +145,9 @@ rtk gain
 ```
 
 Expected:
-- `copilot-orchestrator` as default agent
-- Main model: `copilot/gpt-5.4`
-- Custom agents visible in list including: copilot-orchestrator, go-orchestrator, gpt-orchestrator
+- `auto` as default agent
+- Main model: `opencode-go/kimi-k2.6`
+- Custom agents visible in list including: auto, copilot-orchestrator, go-orchestrator, gpt-orchestrator
 
 ## Fallback Chain
 

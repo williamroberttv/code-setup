@@ -95,16 +95,14 @@
       "agent": "gpt-critic",
       "subtask": true,
       "model": "openai/gpt-5.4",
-      "template": "Review this work as a strong second opinion: $ARGUMENTS\n\Return:\n- key findings or risks\n- whether the current approach is sound\n- the most important fix or improvement\n- residual uncertainty"
+      "template": "Review this work as a strong second opinion: $ARGUMENTS\n\nReturn:\n- key findings or risks\n- whether the current approach is sound\n- the most important fix or improvement\n- residual uncertainty"
     },
     "jira": {
       "description": "Jira MCP workflow for issue tracking",
       "agent": "jira",
       "subtask": true,
-      "model": "opencode-go/kimi- k2.6",
-      "template": "Handle Jira tasks using MCP tools: $ARGUMENTS\n\Use jira_* MCP tools directly. Summarize findings and any constraints."
+      "model": "opencode-go/kimi-k2.6",
+      "template": "Handle Jira tasks using MCP tools: $ARGUMENTS\n\nUse jira_* MCP tools directly. Summarize findings and any constraints."
     }
-  }
-}
   }
 }
