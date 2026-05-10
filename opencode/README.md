@@ -119,29 +119,11 @@ rsync -a opencode/ ~/.config/opencode/
 cd ~/.config/opencode && npm install
 ```
 
-### Install RTK (Rust Token Killer)
-
-RTK reduces LLM token consumption by 60-90% on common dev commands.
-
-```bash
-# Install RTK (Linux)
-curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
-
-# Add to PATH if needed
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
-
-# Initialize for OpenCode
-rtk init -g --opencode
-```
-
 ### Verify Setup
 
 ```bash
 opencode debug config
 opencode agent list
-rtk --version
-rtk gain
 ```
 
 Expected:

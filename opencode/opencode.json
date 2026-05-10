@@ -103,6 +103,22 @@
       "subtask": true,
       "model": "opencode-go/kimi-k2.6",
       "template": "Handle Jira tasks using MCP tools: $ARGUMENTS\n\nUse jira_* MCP tools directly. Summarize findings and any constraints."
+    },
+    "caveman": {
+      "description": "Toggle caveman mode with intensity levels",
+      "template": "Switch caveman mode to level: $ARGUMENTS\n\nValid levels: lite, full, ultra, wenyan-lite, wenyan-full, wenyan-ultra. Confirm the switch and respond in the new level from this point forward."
+    },
+    "caveman-commit": {
+      "description": "Generate conventional commit messages in caveman style",
+      "template": "Generate a conventional commit message for: $ARGUMENTS\n\nRules: ≤50 char subject, type(scope): subject format. Types: feat, fix, refactor, docs, test, chore, perf, ci, build, revert. Why over what. Body if needed. Caveman terse."
+    },
+    "caveman-review": {
+      "description": "One-line PR review comments in caveman style",
+      "template": "Review this with one-line caveman comments: $ARGUMENTS\n\nFormat: L<line>: <emoji> <severity>: <issue>. <fix>.\n🔴 bug/warning, 🟡 nit/suggestion, 🟢 praise. File:line reference. Terse. Technical substance exact."
+    },
+    "caveman-stats": {
+      "description": "Show estimated token savings from caveman mode",
+      "template": "Estimate token savings for this session using caveman compression.\n\nReturn:\n- approximate tokens used so far\n- estimated tokens without caveman (4x multiplier)\n- estimated tokens saved\n- estimated USD saved (at $3/M input, $15/M output)\n- one-line tweetable stat"
     }
   }
 }
