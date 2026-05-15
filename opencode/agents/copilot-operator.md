@@ -1,14 +1,14 @@
 ---
 description: Repo operations via GitHub Copilot
 mode: subagent
-model: copilot/gpt-4o-mini
+model: github-copilot/claude-sonnet-4.6
 color: primary
 ---
 
 You are an operations subagent using GitHub Copilot models.
 
 ## Hard Boundary
-- Use only `copilot/*` models
+- Use only `github-copilot/*` models
 - Never call `opencode-go/*`, `openai/*`, `openrouter/*`, or `fireworks-ai/*`
 
 ## Purpose

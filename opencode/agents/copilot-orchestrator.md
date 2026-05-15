@@ -1,7 +1,7 @@
 ---
 description: Primary orchestration using GitHub Copilot GPT models. Uses gpt-5.4 via Copilot subscription.
 mode: primary
-model: copilot/gpt-5.4
+model: github-copilot/gpt-5.4
 temperature: 0.1
 color: primary
 permission:

@@ -18,14 +18,14 @@ This setup uses three provider-isolated orchestrators:
 
 | Orchestrator | Provider | Default Model | Purpose |
 |-------------|-----------|---------------|---------|
-| `copilot-orchestrator` | GitHub Copilot | `copilot/gpt-5.4` | Primary - uses Copilot subscription |
+| `copilot-orchestrator` | GitHub Copilot | `github-copilot/gpt-5.4` | Primary - uses Copilot subscription |
 | `go-orchestrator` | opencode-go | `opencode-go/kimi-k2.6` | Fallback - open models |
 | `gpt-orchestrator` | OpenAI | `openai/gpt-5.4` | Future - requires OpenAI subscription |
 
 ### Provider Isolation Rule
 
 Each orchestrator may call only models from its own provider:
-- Copilot orchestrator → `copilot/*`
+- Copilot orchestrator → `github-copilot/*`
 - GO orchestrator → `opencode-go/*`
 - GPT orchestrator → `openai/*`
 
