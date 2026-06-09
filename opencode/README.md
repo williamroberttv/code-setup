@@ -1,238 +1,150 @@
-# OpenCode Config
+# Oh My OpenAgent Config
 
-Global OpenCode setup with provider-isolated orchestrators, automatic routing to specialized subagents, GPT planning for large implementation work, and a default GLM final review with GPT escalation only when needed.
+OpenCode setup with oh-my-openagent (OmO) orchestration. **OpenCode Go models are primary. Copilot models are fallback.**
 
 ## Files
 
 | File | Purpose | Description |
 |------|---------|-------------|
-| `opencode.json` | Main config | Models, MCP servers, custom commands |
-| `AGENTS.md` | Communication rules | Provider isolation and orchestration guidelines |
-| `agents/` | Agent definitions | Orchestrator and subagent prompts |
-| `tools/workflow-route.ts` | Routing tool | Deterministic task router with provider profiles |
-| `WORKFLOW_DIAGRAM.md` | Workflow diagram | Mermaid workflow visualization |
+| `opencode.json` | Main config | Plugin registration, MCP, custom commands |
+| `oh-my-openagent.json` | OmO config | Agent-to-model mapping, fallback chains, categories, concurrency |
+| `AGENTS.md` | Rules injection | Project rules, agent reference, caveman mode guidelines |
+| `skills/caveman/` | Caveman skill | Ultra-compressed communication mode |
 
-## Orchestrators
+## Model Architecture
 
-This setup uses three provider-isolated orchestrators:
+### Tier 1 — OpenCode Go Elite (Primary)
 
-| Orchestrator | Provider | Default Model | Purpose |
-|-------------|-----------|---------------|---------|
-| `copilot-orchestrator` | GitHub Copilot | `github-copilot/gpt-5.4` | Primary - uses Copilot subscription |
-| `go-orchestrator` | opencode-go | `opencode-go/kimi-k2.6` | Fallback - open models |
-| `gpt-orchestrator` | OpenAI | `openai/gpt-5.4` | Future - requires OpenAI subscription |
+| Model | SWE-Pro | req/5hr | Role |
+|-------|---------|---------|------|
+| `opencode-go/qwen3.7-max` | 60.6% | 950 | Oracle, Code-reviewer |
+| `opencode-go/qwen3.7-plus` | 57.6% | 4,300 | Sisyphus, Metis, Momus, writing |
+| `opencode-go/minimax-m3` | 59.0% | 3,200 | Hephaestus, unspecified-high |
+| `opencode-go/glm-5.1` | 58.4% | 880 | Prometheus, long-horizon |
+| `opencode-go/kimi-k2.6` | 58.6% | 1,150 | Complex tasks fallback |
 
-### Provider Isolation Rule
+### Tier 2 — OpenCode Go Standard
 
-Each orchestrator may call only models from its own provider:
-- Copilot orchestrator → `github-copilot/*`
-- GO orchestrator → `opencode-go/*`
-- GPT orchestrator → `openai/*`
+| Model | SWE-Pro | req/5hr | Role |
+|-------|---------|---------|------|
+| `opencode-go/deepseek-v4-pro` | 55.4% | 3,300 | Atlas, standard engineering |
+| `opencode-go/qwen3.6-plus` | — | 3,450 | Volume fallback |
 
-## Primary Model (Default)
+### Tier 3 — OpenCode Go Volume (Never Rate-Limited)
 
-- default model: `opencode-go/kimi-k2.6`
-- default agent: `auto` (uses automatic routing to specialized subagents)
-- small_model: `opencode-go/deepseek-v4-flash`
+| Model | SWE-Verified | req/5hr | Role |
+|-------|--------------|---------|------|
+| `opencode-go/deepseek-v4-flash` | 79% | 31,650 | Librarian, Explore, Sisyphus-Junior |
+| `opencode-go/mimo-v2.5` | — | 30,100 | Volume fallback |
 
-## Configured MCP Servers
+### Tier 4 — Copilot Frontier (Fallback)
 
-### Jira
-- type: `remote`
-- url: `https://mcp.atlassian.com/mcp`
-- enabled: `true`
-- Tools: `jira_*` (only enabled for `jira` agent)
+| Model | SWE-Pro | SWE-Verified | Role |
+|-------|---------|--------------|------|
+| `copilot/claude-opus-4` | 64.3% | 87.6% | Fallback for Sisyphus, Oracle |
+| `copilot/gpt-5.4` | 57.7% | — | Fallback for Hephaestus, Atlas |
+| `copilot/claude-sonnet-4` | — | — | Fallback for Prometheus, Metis, Momus |
+| `copilot/gpt-5.3-codex` | — | — | Fallback for Atlas, coding |
 
-## Orchestrator Commands
+## Agents
 
-| Command | Agent | Description |
-|---------|-------|-------------|
-| `/copilot` | copilot-orchestrator | Primary - GitHub Copilot GPT |
-| `/go` | go-orchestrator | Fallback - opencode-go models |
-| `/gpt` | gpt-orchestrator | Future - OpenAI models |
+| Agent | Role | Primary | Fallback Chain |
+|-------|------|---------|----------------|
+| Sisyphus | Main orchestrator | qwen3.7-plus | qwen3.7-max → claude-opus-4 → gpt-5.4 → minimax-m3 |
+| Hephaestus | Deep worker | minimax-m3 | gpt-5.4 → gpt-5.3-codex → deepseek-v4-pro → deepseek-v4-flash |
+| Oracle | Architecture / RCA | qwen3.7-max | claude-opus-4 → claude-sonnet-4 → glm-5.1 → kimi-k2.6 |
+| Prometheus | Planner | glm-5.1 | claude-sonnet-4 → gpt-5.4 → qwen3.7-max → deepseek-v4-pro |
+| Librarian | Search | deepseek-v4-flash | mimo-v2.5 → claude-sonnet-4 |
+| Explore | Fast grep | deepseek-v4-flash | mimo-v2.5 |
+| Metis | Plan consultant | qwen3.7-plus | claude-sonnet-4 → qwen3.6-plus → deepseek-v4-pro |
+| Momus | Review | qwen3.7-plus | claude-sonnet-4 → qwen3.6-plus → kimi-k2.6 |
+| Atlas | Ops / tests | deepseek-v4-pro | gpt-5.3-codex → minimax-m3 → deepseek-v4-flash |
+| Code-reviewer | Quality | qwen3.7-max | claude-opus-4 → claude-sonnet-4 → kimi-k2.6 → deepseek-v4-pro |
+| Sisyphus-Junior | Quick tasks | deepseek-v4-flash | mimo-v2.5 |
 
-## Subagent Commands (Provider-Specific)
-
-### Copilot Subagents
-| Command | Agent | Description |
-|---------|-------|-------------|
-| `/copilot-rca` | copilot-analyzer | Root cause analysis |
-| `/copilot-review` | copilot-reviewer | Final review |
-| `/copilot-plan` | copilot-planner | Implementation planning |
-| `/copilot-code` | copilot-coder | Coding pass |
-| `/copilot-ops` | copilot-operator | Tests, git, PR |
-| `/copilot-draft` | copilot-writer | Naming, alternatives |
-
-### GO Subagents
-| Command | Agent | Description |
-|---------|-------|-------------|
-| `/go-rca` | go-analyzer | Root cause analysis |
-| `/go-review` | go-reviewer | Final review |
-| `/go-plan` | go-planner | Implementation planning |
-| `/go-code` | go-coder | Coding pass |
-| `/go-ops` | go-operator | Tests, git, PR |
-| `/go-draft` | go-writer | Naming, alternatives |
-
-### GPT Subagents (Future)
-| Command | Agent | Description |
-|---------|-------|-------------|
-| `/gpt-rca` | gpt-analyzer | Root cause analysis |
-| `/gpt-review` | gpt-reviewer | Final review |
-| `/gpt-code` | gpt-builder | Coding pass |
-| `/gpt-ops` | gpt-operator | Tests, git, PR |
-| `/gpt-draft` | gpt-writer | Naming, alternatives |
-
-## General Commands
+## Commands
 
 | Command | Agent | Description |
 |---------|-------|-------------|
-| `/ship` | auto | End-to-end implementation |
-| `/code` | qwen-coder | Fast coding pass (opencode-go) |
-| `/ops` | qwen-operator | Tests, git, PR workflow |
-| `/rca` | glm-analyzer | Deep root cause analysis |
-| `/review` | glm-reviewer | Default final review |
-| `/ctx` | kimi-context | Long-context synthesis |
-| `/plan` | gpt-planner | Large implementation planning |
-| `/draft` | minimax-writer | Naming, copy, alternatives |
-| `/judge` | gpt-critic | Second opinion / escalation |
+| `/ship` | sisyphus | End-to-end implementation |
+| `/ultrawork` | sisyphus | Full team activation |
+| `/plan` | prometheus | Strategic planning |
+| `/code` | hephaestus | Fast coding pass |
+| `/ops` | atlas | Tests, git, PR |
+| `/rca` | oracle | Root cause analysis |
+| `/review` | code-reviewer | Final review |
+| `/judge` | momus | Second opinion |
 | `/jira` | jira | Jira MCP workflow |
+| `/caveman` | — | Toggle caveman mode |
+
+## Fallback Behavior
+
+```
+Rate limit / error → cooldown provider 60s → try next fallback model
+Max 3 fallback attempts per request
+Notify on every fallback switch
+```
+
+Go models fail → fallback to Copilot. Copilot fails → fallback to Go volume models.
 
 ## Installation
 
 ### Prerequisites
-- OpenCode installed on the machine
-- GitHub Copilot configured (`/connect` command)
-- Provider authentication configured for additional providers as needed
+- OpenCode 1.0.133+
+- OpenCode Go subscription (for Tier 1–3 primary models)
+- GitHub Copilot subscription (for Tier 4 fallbacks)
 
 ### Install
 
 ```bash
-# Clone this repo to your opencode config
+# Install oh-my-openagent plugin
+bunx oh-my-openagent install
+
+# Or clone this config
 git clone https://github.com/williamroberttv/code-setup.git ~/.config/opencode
 ```
 
-# Or copy manually
-mkdir -p ~/.config/opencode
-rsync -a opencode/ ~/.config/opencode/
-
-# Install dependencies
-cd ~/.config/opencode && npm install
-```
-
-### Verify Setup
+### Verify
 
 ```bash
-opencode debug config
-opencode agent list
+opencode --version
+bunx oh-my-openagent doctor --verbose
+opencode models
 ```
 
-Expected:
-- `auto` as default agent
-- Main model: `opencode-go/kimi-k2.6`
-- Custom agents visible in list including: auto, copilot-orchestrator, go-orchestrator, gpt-orchestrator
+## Jira MCP
 
-## Fallback Chain
-
-```
-Copilot (primary) → GO (fallback) → GPT (future)
-```
-
-If Copilot is unavailable, switch to GO with `/go` command.
-
-## Jira MCP Setup
-
-### Authentication
 ```bash
-opencode mcp list
 opencode mcp auth jira
+opencode /jira Create issue for login bug
 ```
 
-### Usage
-```bash
-# Use Jira command for issue tracking
-opencode /jira Create issue for login bug fix
-```
+## Rate Limit Budgeting
 
-## Updating Model Names
+| Tier | Model | req/5hr | Use For |
+|------|-------|---------|---------|
+| Volume | deepseek-v4-flash | 31,650 | Search, quick fixes, review |
+| Standard | qwen3.7-plus | 4,300 | Standard engineering |
+| Elite | minimax-m3 | 3,200 | Complex agentic work |
+| Elite | kimi-k2.6 | 1,150 | Hard architecture |
+| Frontier | qwen3.7-max | 950 | Orchestration, Oracle |
+| Copilot | claude-opus-4 | subscription | Fallback only |
 
-If model names change in OpenCode, update in `opencode.json`:
+> Rule: If a task will take >100 requests, route through v4-flash first. Escalate to elite for complex work. Reserve qwen3.7-max for the hardest tasks only. Copilot is fallback, not primary.
 
-```json
-{
-  "model": "copilot/NEW_MODEL_NAME",
-  "small_model": "copilot/NEW_SMALL_MODEL"
-}
-```
+## Updating Models
 
-Also update agent files in `agents/` directory if they have specific model overrides.
-
-## Workflow
-
-```mermaid
-graph TD
-    A[User] --> B[copilot-orchestrator]
-    B -->|Simple| C[Answer]
-    B -->|Non-Trivial| D[workflow-route]
-    D -->|copilot profile| E[Copilot Subagents]
-    D -->|go profile| F[GO Subagents]
-    D -->|gpt profile| G[GPT Subagents]
-    E --> H[Result]
-    F --> H
-    G --> H
-    H --> I[Done]
-```
-
-## Daily Usage
-
-For normal day-to-day work, use the default (Copilot):
-
-```bash
-# Ask normal questions
-opencode "How does auth work?"
-
-# Request implementation
-opencode "Add login button to header"
-
-# Run tests
-opencode "Run the test suite"
-```
-
-Use fallback when needed:
-
-```bash
-# Switch to GO orchestrator
-/opencode /go Fix this bug
-
-# Or use specific provider commands
-/opencode /go-rca Why is this failing?
-/opencode /go-code Implement feature X
-/opencode /go-ops Run tests
-```
-
-## Updating Agents
-
-To update agent prompts or add new agents:
-
-1. Edit files in `agents/` directory
-2. Changes apply immediately on next opencode session
-3. Test with `opencode agent list` to verify
+If model names change, update in `oh-my-openagent.json` under `agents` and `categories` blocks. Restart OpenCode to apply.
 
 ## Troubleshooting
 
-### Agents not appearing
 ```bash
+# Diagnostics
+bunx oh-my-openagent doctor --verbose
+
+# Refresh model capabilities cache
+bunx oh-my-openagent refresh-model-capabilities
+
+# Check config
 opencode debug config
-```
-Check for JSON errors in opencode.json or agent files.
-
-### Model errors
-Verify model names are valid with:
-```bash
-opencode providers
-```
-
-### MCP not working
-```bash
-opencode mcp list
-opencode mcp auth jira
 ```

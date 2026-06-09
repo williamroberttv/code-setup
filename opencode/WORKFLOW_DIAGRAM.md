@@ -1,147 +1,118 @@
 # Workflow Diagram
 
-## Primary Orchestration Flow
+## Oh My OpenAgent Orchestration Flow
 
 ```mermaid
 graph TD
-    A[User Request] --> B{Auto Agent}
-    B -->|Simple| C[Direct Response]
-    B -->|Non-Trivial| D[workflow-route]
-    D --> E{Route Decision}
+    A[User Request] --> B{Sisyphus}
+    B -->|Simple / Quick| C[Sisyphus-Junior<br/>deepseek-v4-flash]
+    B -->|Non-Trivial| D{IntentGate}
+    D -->|visual| E[Visual-Engineering<br/>mimo-v2-omni]
+    D -->|ultrabrain| F[Ultrabrain<br/>qwen3.7-max]
+    D -->|deep| G[Deep<br/>qwen3.7-max]
+    D -->|quick| C
+    D -->|writing| H[Writing<br/>qwen3.7-plus]
+    D -->|unspecified-high| I[Unspecified-High<br/>minimax-m3]
+    D -->|unspecified-low| C
     
-    E -->|self| C
-    E -->|explore| F[Explore]
-    F --> E
-    E -->|qwen-coder| G[Qwen Coder]
-    E -->|gpt-planner| H[GPT Planner]
-    E -->|glm-analyzer| I[GLM Analyzer]
-    E -->|glm-reviewer| J[GLM Reviewer]
-    E -->|gpt-critic| K[GPT Critic]
-    E -->|kimi-context| L[Kimi Context]
-    E -->|qwen-operator| M[Qwen Operator]
-    E -->|minimax-writer| N[MiniMax Writer]
-    E -->|general| O[General Agent]
+    E -->|implement| J[Hephaestus<br/>minimax-m3]
+    F -->|plan| K[Prometheus<br/>glm-5.1]
+    G -->|research| L[Librarian / Explore<br/>deepseek-v4-flash]
+    I -->|implement| J
     
-    G -->|code changes| J
-    H -->|plan| G
-    I --> G
-    L -->|synthesis| H
-    L -->|synthesis| I
-    L -->|synthesis| J
+    K -->|plan ready| J
+    L -->|context| J
     
-    G -->|ops| M
-    M -->|review| J
-    J -->|escalation| K
-    J -->|ok| P[Done]
+    J -->|code complete| M[Atlas<br/>deepseek-v4-pro]
+    M -->|tests / git / pr| N[Code-Reviewer<br/>qwen3.7-max]
+    
+    N -->|needs 2nd opinion| O[Momus<br/>qwen3.7-plus]
+    N -->|ok| P[Done]
+    O --> P
+    
+    C --> P
+    H --> P
     
     style A fill:#e1e8ed
     style P fill:#90EE90
-    style K fill:#FFB6C1
-```
-
-## Decision Tree
-
-```mermaid
-graph TD
-    A[Start] --> B{Scope Known?}
-    B -->|No| C[Explore First]
-    C --> D{File Count?}
-    D -->|>= 4| E[GPT Planner]
-    D -->|< 4| F[Qwen Coder]
-    B -->|Yes| G{Implementation?}
-    
-    G -->|Large/Multi| E
-    G -->|Contained| F
-    G -->|Tests/Git| M[Qwen Operator]
-    G -->|Review| J[GLM Reviewer]
-    
-    E -->|plan| F
-    F --> M
-    M --> J
-    
-    J -->|High Risk| K[GPT Critic]
-    J -->|OK| P[Done]
-    K --> P
+    style F fill:#FFD700
+    style N fill:#87CEEB
 ```
 
 ## Agent Roles
 
-| Agent | Model | Purpose | Tools |
-|-------|-------|--------|-------|
-| `auto` | Kimi 2.6 | Orchestrator | read, search, context, route |
-| `qwen-coder` | MiMo v2.5 Pro | Code implementation | write, edit, bash |
-| `qwen-operator` | DeepSeek v4 Flash | Ops (tests, git, PR) | bash, git |
-| `glm-analyzer` | GLM-5 | RCA, tradeoffs | read, grep |
-| `glm-reviewer` | GLM-5 | Default review | read, grep |
-| `gpt-planner` | GPT-5.4 | Large planning | read, grep |
-| `gpt-critic` | GPT-5.4 | Escalation review | read, grep |
-| `kimi-context` | Kimi 2.6 | Context compression | read |
-| `minimax-writer` | MiniMax M2.7 | Creative writing | read |
+| Agent | Primary Model | SWE-Pro | Purpose |
+|-------|---------------|---------|---------|
+| `sisyphus` | qwen3.7-plus | 57.6% | Main orchestrator, delegates to categories |
+| `sisyphus-junior` | deepseek-v4-flash | 79% SWE-Verified | Quick tasks, volume work |
+| `hephaestus` | minimax-m3 | 59.0% | Deep autonomous implementation |
+| `oracle` | qwen3.7-max | 60.6% | Architecture, RCA, debugging |
+| `prometheus` | glm-5.1 | 58.4% | Strategic planning, interview mode |
+| `librarian` | deepseek-v4-flash | 79% SWE-Verified | Docs / code search |
+| `explore` | deepseek-v4-flash | 79% SWE-Verified | Fast codebase grep |
+| `metis` | qwen3.7-plus | 57.6% | Plan consultant |
+| `momus` | qwen3.7-plus | 57.6% | Review / critique |
+| `atlas` | deepseek-v4-pro | 55.4% | Tests, git, PR workflow |
+| `code-reviewer` | qwen3.7-max | 60.6% | Quality review |
 
-## Routing Patterns
+## Category Routing
 
-### Search / Discovery
-→ `explore`
+| Category | Use Case | Primary | Fallback Chain |
+|----------|----------|---------|----------------|
+| `visual-engineering` | Frontend, UI/UX | mimo-v2-omni | claude-sonnet-4 |
+| `ultrabrain` | Hard logic, architecture | qwen3.7-max | claude-opus-4 → glm-5.1 |
+| `deep` | Autonomous research | qwen3.7-max | claude-opus-4 → minimax-m3 |
+| `quick` | Single-file changes | deepseek-v4-flash | mimo-v2.5 |
+| `unspecified-low` | Moderate tasks | deepseek-v4-flash | qwen3.7-plus |
+| `unspecified-high` | Complex work | minimax-m3 | gpt-5.4 → deepseek-v4-pro |
+| `writing` | Docs, naming | qwen3.7-plus | claude-sonnet-4 |
+| `artistry` | Creative problem-solving | glm-5.1 | claude-sonnet-4 |
 
-### Implementation (scope unknown)
-→ `explore` → measure → rerun with scopeKnown=true
+## Fallback Behavior
 
-### Implementation (large, multi-file)
-→ `gpt-planner` → `qwen-coder`
-
-### Implementation (contained, 1-3 files)
-→ `qwen-coder`
-
-### RCA / Debugging / Tradeoffs
-→ `glm-analyzer`
-
-### Tests / Git / PR
-→ `qwen-operator`
-
-### Review Only
-→ `glm-reviewer` → escalate to `gpt-critic` if high-stakes
-
-### Large Context
-→ `kimi-context` → route to appropriate agent
-
-### Naming / Writing / Brainstorming
-→ `minimax-writer`
-
-### Independent Parallel Work
-→ `general` → split and integrate
+```
+Error / Rate Limit → Blacklist provider 60s → Next fallback model
+Go primary fails → Copilot fallback → Go volume fallback
+Max 3 attempts per request → Notify on every switch
+```
 
 ## Common Flows
 
-### Code Change + Repo Ops
+### Quick Fix
 ```
-qwen-coder → qwen-operator → glm-reviewer
+sisyphus → sisyphus-junior (deepseek-v4-flash) → done
+```
+
+### Standard Implementation
+```
+sisyphus → hephaestus (minimax-m3) → atlas (deepseek-v4-pro) → code-reviewer (qwen3.7-max)
 ```
 
 ### Large Implementation
 ```
-explore → gpt-planner → qwen-coder → qwen-operator → glm-reviewer
+sisyphus → prometheus (glm-5.1) → hephaestus (minimax-m3) → atlas → code-reviewer
 ```
 
-### Large Context Bug
+### Root Cause Analysis
 ```
-kimi-context → glm-analyzer → qwen-coder → qwen-operator → glm-reviewer
+sisyphus → oracle (qwen3.7-max) → hephaestus → atlas → code-reviewer
 ```
 
 ### High-Stakes Review
 ```
-glm-reviewer → gpt-critic (escalation)
+code-reviewer (qwen3.7-max) → momus (qwen3.7-plus) → done
 ```
 
 ## Command Aliases
 
 | Command | Agent | Model |
 |---------|-------|-------|
-| `/ship` | auto | Kimi 2.6 |
-| `/code` | qwen-coder | MiMo Pro |
-| `/ops` | qwen-operator | DeepSeek Flash |
-| `/rca` | glm-analyzer | GLM-5 |
-| `/review` | glm-reviewer | GLM-5 |
-| `/ctx` | kimi-context | Kimi 2.6 |
-| `/plan` | gpt-planner | GPT-5.4 |
-| `/draft` | minimax-writer | MiniMax M2.7 |
-| `/judge` | gpt-critic | GPT-5.4 |
+| `/ship` | sisyphus | qwen3.7-plus |
+| `/ultrawork` | sisyphus | qwen3.7-plus |
+| `/plan` | prometheus | glm-5.1 |
+| `/code` | hephaestus | minimax-m3 |
+| `/ops` | atlas | deepseek-v4-pro |
+| `/rca` | oracle | qwen3.7-max |
+| `/review` | code-reviewer | qwen3.7-max |
+| `/judge` | momus | qwen3.7-plus |
+| `/jira` | jira | qwen3.7-plus |

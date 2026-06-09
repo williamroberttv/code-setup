@@ -1,0 +1,195 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
+  "model_fallback": true,
+  "runtime_fallback": {
+    "enabled": true,
+    "retry_on_errors": [400, 429, 503, 529],
+    "max_fallback_attempts": 3,
+    "cooldown_seconds": 60,
+    "timeout_seconds": 30,
+    "notify_on_fallback": true
+  },
+  "agents": {
+    "sisyphus": {
+      "model": "opencode-go/qwen3.7-plus",
+      "fallback_models": [
+        "opencode-go/minimax-m3",
+        "opencode-go/qwen3.7-max",
+        "copilot/claude-opus-4",
+        "opencode-go/kimi-k2.6"
+      ],
+      "ultrawork": {
+        "model": "opencode-go/qwen3.7-max",
+        "variant": "max"
+      }
+    },
+    "hephaestus": {
+      "model": "opencode-go/minimax-m3",
+      "fallback_models": [
+        "copilot/gpt-5.4",
+        "copilot/gpt-5.3-codex",
+        "opencode-go/deepseek-v4-pro",
+        "opencode-go/deepseek-v4-flash"
+      ],
+      "prompt_append": "Explore thoroughly, then implement. Prefer small, testable changes."
+    },
+    "oracle": {
+      "model": "opencode-go/qwen3.7-max",
+      "fallback_models": [
+        "copilot/claude-opus-4",
+        "copilot/claude-sonnet-4",
+        "opencode-go/glm-5.1",
+        "opencode-go/kimi-k2.6"
+      ]
+    },
+    "librarian": {
+      "model": "opencode-go/deepseek-v4-flash",
+      "fallback_models": [
+        "opencode-go/mimo-v2.5",
+        "copilot/claude-sonnet-4"
+      ]
+    },
+    "explore": {
+      "model": "opencode-go/deepseek-v4-flash",
+      "fallback_models": "opencode-go/mimo-v2.5"
+    },
+    "multimodal-looker": {
+      "model": "opencode-go/mimo-v2-omni",
+      "fallback_models": [
+        "copilot/gpt-5.4",
+        "opencode-go/qwen3.7-plus"
+      ]
+    },
+    "prometheus": {
+      "model": "opencode-go/glm-5.1",
+      "fallback_models": [
+        "copilot/claude-sonnet-4",
+        "copilot/gpt-5.4",
+        "opencode-go/qwen3.7-max",
+        "opencode-go/deepseek-v4-pro"
+      ],
+      "prompt_append": "Always interview first. Validate scope before planning."
+    },
+    "metis": {
+      "model": "opencode-go/qwen3.7-plus",
+      "fallback_models": [
+        "copilot/claude-sonnet-4",
+        "opencode-go/qwen3.6-plus",
+        "opencode-go/deepseek-v4-pro"
+      ]
+    },
+    "momus": {
+      "model": "opencode-go/qwen3.7-plus",
+      "fallback_models": [
+        "copilot/claude-sonnet-4",
+        "opencode-go/qwen3.6-plus",
+        "opencode-go/kimi-k2.6"
+      ]
+    },
+    "atlas": {
+      "model": "opencode-go/deepseek-v4-pro",
+      "fallback_models": [
+        "copilot/gpt-5.3-codex",
+        "opencode-go/minimax-m3",
+        "opencode-go/deepseek-v4-flash"
+      ]
+    },
+    "code-reviewer": {
+      "model": "opencode-go/qwen3.7-max",
+      "fallback_models": [
+        "copilot/claude-opus-4",
+        "copilot/claude-sonnet-4",
+        "opencode-go/kimi-k2.6",
+        "opencode-go/deepseek-v4-pro"
+      ]
+    },
+    "sisyphus-junior": {
+      "model": "opencode-go/deepseek-v4-flash",
+      "fallback_models": "opencode-go/mimo-v2.5"
+    }
+  },
+  "categories": {
+    "visual-engineering": {
+      "model": "opencode-go/mimo-v2-omni",
+      "fallback_models": [
+        "copilot/claude-sonnet-4",
+        "opencode-go/qwen3.7-plus"
+      ]
+    },
+    "ultrabrain": {
+      "model": "opencode-go/qwen3.7-max",
+      "fallback_models": [
+        "copilot/claude-opus-4",
+        "opencode-go/glm-5.1",
+        "opencode-go/kimi-k2.6"
+      ]
+    },
+    "deep": {
+      "model": "opencode-go/qwen3.7-max",
+      "fallback_models": [
+        "copilot/claude-opus-4",
+        "opencode-go/minimax-m3",
+        "opencode-go/deepseek-v4-pro"
+      ]
+    },
+    "artistry": {
+      "model": "opencode-go/glm-5.1",
+      "fallback_models": [
+        "copilot/claude-sonnet-4",
+        "opencode-go/qwen3.7-plus",
+        "opencode-go/qwen3.6-plus"
+      ]
+    },
+    "quick": {
+      "model": "opencode-go/deepseek-v4-flash",
+      "fallback_models": "opencode-go/mimo-v2.5"
+    },
+    "unspecified-low": {
+      "model": "opencode-go/deepseek-v4-flash",
+      "fallback_models": "opencode-go/qwen3.7-plus"
+    },
+    "unspecified-high": {
+      "model": "opencode-go/minimax-m3",
+      "fallback_models": [
+        "copilot/gpt-5.4",
+        "opencode-go/deepseek-v4-pro",
+        "opencode-go/kimi-k2.6"
+      ]
+    },
+    "writing": {
+      "model": "opencode-go/qwen3.7-plus",
+      "fallback_models": [
+        "copilot/claude-sonnet-4",
+        "opencode-go/qwen3.6-plus"
+      ]
+    }
+  },
+  "background_task": {
+    "defaultConcurrency": 5,
+    "staleTimeoutMs": 180000,
+    "providerConcurrency": {
+      "opencode-go": 10,
+      "copilot": 5
+    },
+    "modelConcurrency": {
+      "opencode-go/qwen3.7-max": 1,
+      "opencode-go/kimi-k2.6": 2,
+      "opencode-go/glm-5.1": 1,
+      "opencode-go/glm-5": 2,
+      "opencode-go/minimax-m3": 3,
+      "opencode-go/deepseek-v4-pro": 3,
+      "opencode-go/kimi-k2.5": 3,
+      "opencode-go/qwen3.7-plus": 5,
+      "opencode-go/qwen3.6-plus": 5,
+      "opencode-go/deepseek-v4-flash": 20,
+      "opencode-go/mimo-v2.5": 15,
+      "copilot/claude-opus-4": 1,
+      "copilot/claude-sonnet-4": 2,
+      "copilot/gpt-5.4": 2,
+      "copilot/gpt-5.3-codex": 3
+    }
+  },
+  "git_master": {
+    "include_co_authored_by": false
+  }
+}
